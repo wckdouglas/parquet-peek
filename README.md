@@ -3,5 +3,9 @@
 just a simple way to check parquet file contents
 
 ```
-uv run ./parquet-peek
+pip install -e .
+```
+
+```
+parquet-peek -p gs://some-bucket/some-file.parquet
 ```
