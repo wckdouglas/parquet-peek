@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+
+# see:
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-concurrency-to-cancel-any-in-progress-job-or-run
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'write'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Fetch tags
+        run: git fetch --prune --unshallow --tags
+
+      - name: Install the latest version of rye
+        uses: eifinger/setup-rye@v4
+
+      - name: Build dist
+        run: |
+          rye build --verbose
+
+      - name: publish to pypi
+        run: |
+          rye publish --token ${{ secrets.PYPI_TOKEN }} --yes --verbose
+
+      - name: push tag
+        run: |
+            gh release create $(rye version)
+        env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
