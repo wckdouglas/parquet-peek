@@ -12,3 +12,6 @@ dependencies = [
     "rich-click>=1.8.3",
     "s3fs>=2024.9.0",
 ]
+
+[project.scripts]
+parquet-peek = "parquet_peek.py:main"
