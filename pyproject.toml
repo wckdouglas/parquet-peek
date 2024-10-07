@@ -1,0 +1,48 @@
+[project]
+name = "parquet-peek"
+dynamic = ["version"]
+description = "just a simple way to check parquet file contents"
+authors = [{ name = "wckdouglas", email = "douglas@vant.ai" }]
+dependencies = [
+    "polars>=1.9.0",
+    "gcsfs>=2024.9.0.post1",
+    "rich-click>=1.8.3",
+    "fsspec>=2024.9.0",
+    "s3fs>=2024.9.0",
+]
+readme = "README.md"
+requires-python = ">= 3.10"
+
+[project.scripts]
+parquet-peek = "parquet_peek:main"
+
+[build-system]
+requires = ["hatchling", "versioningit"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = ["ruff>=0.6.9"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/parquet_peek"]
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.versioningit]
+default-version = "0.0.0+unknown"
+
+[tool.versioningit.next-version]
+method = "smallest"
+
+[tool.versioningit.format]
+distance = "{next_version}"
+dirty = "{version}+dirty"
+distance-dirty = "{next_version}.dev{distance}+{vcs}{rev}.dirty"
+
+[tool.ruff]
+lint.select = ["E", "F", "W", "I"]
