@@ -3,7 +3,9 @@ import polars as pl
 import rich_click as click
 
 
-@click.command(help="A tool to sneak peek parquet files")
+@click.command(
+    help="A tool to sneak peek parquet files", context_settings={"show_default": True}
+)
 @click.option(
     "-p", "--parquet-fn", help="Parquet file to peek", type=str, required=True
 )
