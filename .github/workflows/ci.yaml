@@ -28,6 +28,11 @@ jobs:
       - name: Install the latest version of rye
         uses: eifinger/setup-rye@v4
 
+      - name: test
+        run: |
+            rye sync
+            rye test
+
       - name: Build dist
         run: |
           rye build --verbose
