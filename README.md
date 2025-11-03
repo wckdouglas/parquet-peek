@@ -9,3 +9,9 @@ pip install -e .
 ```
 parquet-peek -p gs://some-bucket/some-file.parquet
 ```
+
+# dev
+
+```
+rye sync
+```

@@ -22,6 +22,11 @@ def check_file_existence(gcs_file_name: str) -> bool:
     return blob.exists()
 
 
+def collect_head(parquet_fn: str, lines_to_show: int):
+    df = pl.scan_parquet(parquet_fn)
+    return df.head(lines_to_show).collect()
+
+
 @click.command(help="A tool to sneak peek parquet files")
 @click.option(
     "-p", "--parquet-fn", help="Parquet file to peek", type=str, required=True
@@ -32,16 +37,16 @@ def check_file_existence(gcs_file_name: str) -> bool:
 @click.option(
     "-w",
     "--width",
-    help="char width to print in each " "columns of the data frame",
+    help="char width to print in each columns of the data frame",
     type=int,
     default=250,
 )
 def main(parquet_fn, lines_to_show, width):
     if not check_file_existence(parquet_fn):
         raise FileNotFoundError(f"File {parquet_fn} not found in GCS.")
-    df = pl.scan_parquet(parquet_fn)
+    df = collect_head(parquet_fn=parquet_fn, lines_to_show=lines_to_show)
     with pl.Config(fmt_str_lengths=width, tbl_width_chars=width, tbl_cols=-1):
-        print(df.head(lines_to_show).collect())
+        print(df)
 
 
 if __name__ == "__main__":
