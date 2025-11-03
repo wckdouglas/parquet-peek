@@ -1,3 +1,7 @@
+from unittest.mock import patch
+
+import polars as pl
+
 from parquet_peek import collect_head, extract_bucket
 
 TEST_PARQUET_GCS_PATH = (
@@ -11,7 +15,12 @@ def test_extract_bucket():
     assert blob == "nyc-taxi/taxi.parquet/part.98.parquet"
 
 
-def test_collect_head():
+@patch("parquet_peek.pl.scan_parquet")
+def test_collect_head(mock_scan_parquet):
+    mock_scan_parquet.return_value = pl.DataFrame(
+        {"col1": range(100), "col2": range(100, 200)}
+    ).lazy()
+
     df = collect_head(
         TEST_PARQUET_GCS_PATH,
         lines_to_show=5,
