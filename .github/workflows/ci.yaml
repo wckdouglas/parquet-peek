@@ -5,6 +5,9 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - "**"
+
 
 
 # see:
@@ -14,16 +17,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  docker:
+  test:
     runs-on: ubuntu-latest
     permissions:
       contents: 'write'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Fetch tags
-        run: git fetch --prune --unshallow --tags
 
       - name: Install the latest version of rye
         uses: eifinger/setup-rye@v4
@@ -33,16 +33,35 @@ jobs:
             rye sync
             rye test
 
-      - name: Build dist
-        run: |
-          rye build --verbose
 
-      - name: publish to pypi
-        run: |
-          rye publish --token ${{ secrets.PYPI_TOKEN }} --yes --verbose
+  publish:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-      - name: push tag
-        run: |
-            gh release create $(rye version)
-        env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Fetch tags
+      run: git fetch --prune --unshallow --tags
+
+    - name: Install the latest version of rye
+      uses: eifinger/setup-rye@v4
+
+    - name: Build dist
+      run: |
+        rye build --verbose
+
+    - name: publish to pypi
+      run: |
+        rye publish --token ${{ secrets.PYPI_TOKEN }} --yes --verbose
+
+    - name: push tag
+      run: |
+        gh release create $(rye version)
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
