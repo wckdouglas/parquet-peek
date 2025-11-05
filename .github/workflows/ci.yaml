@@ -43,7 +43,7 @@ jobs:
         fetch-depth: 0
 
     - name: Fetch tags
-      run: git fetch --prune --unshallow --tags
+      run: git fetch --prune --tags
 
     - name: Install the latest version of rye
       uses: eifinger/setup-rye@v4
