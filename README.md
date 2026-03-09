@@ -1,19 +1,37 @@
 # parquet-peek
 
-[![PyPI version](https://badge.fury.io/py/parquet-peek.svg)](https://badge.fury.io/py/parquet-peek) [![CI](https://github.com/wckdouglas/parquet-peek/actions/workflows/ci.yaml/badge.svg)](https://github.com/wckdouglas/parquet-peek/actions/workflows/ci.yaml)
+[![CI](https://github.com/wckdouglas/parquet-peek/actions/workflows/ci.yaml/badge.svg)](https://github.com/wckdouglas/parquet-peek/actions/workflows/ci.yaml)
 
 just a simple way to check parquet file contents
 
+## Install
+
 ```
-pip install -e .
+cargo install --path .
 ```
+
+For cloud storage support (GCS, S3):
+
+```
+cargo install --path . --features cloud
+```
+
+## Usage
+
+```
+parquet-peek -p /path/to/file.parquet
+parquet-peek -p /path/to/file.parquet -l 20 -w 100
+```
+
+With cloud feature enabled:
 
 ```
 parquet-peek -p gs://some-bucket/some-file.parquet
 ```
 
-# dev
+## Dev
 
 ```
-rye sync
+cargo build
+cargo test
 ```

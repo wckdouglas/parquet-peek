@@ -5,9 +5,6 @@ on:
     branches:
     - "**"
 
-
-# see:
-# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-concurrency-to-cancel-any-in-progress-job-or-run
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
@@ -19,45 +16,28 @@ jobs:
       contents: 'write'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Install the latest version of rye
-        uses: eifinger/setup-rye@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: test
-        run: |
-            rye sync
-            rye test
+      - name: Cache cargo registry and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
 
+      - name: Build
+        run: cargo build
 
-  publish:
-    needs: test
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+      - name: Test
+        run: cargo test
 
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Clippy
+        run: cargo clippy -- -D warnings
 
-    - name: Fetch tags
-      run: git fetch --prune --tags
-
-    - name: Install the latest version of rye
-      uses: eifinger/setup-rye@v4
-
-    - name: Build dist
-      run: |
-        rye build --verbose
-
-    - name: publish to pypi
-      run: |
-        rye publish --token ${{ secrets.PYPI_TOKEN }} --yes --verbose
-
-    - name: push tag
-      run: |
-        gh release create $(rye version)
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Format check
+        run: cargo fmt -- --check
