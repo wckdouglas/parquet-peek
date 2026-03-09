@@ -10,7 +10,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  python:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install the latest version of rye
+        uses: eifinger/setup-rye@v4
+
+      - name: Test
+        run: |
+            rye sync
+            rye test
+
+  rust:
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
@@ -44,3 +60,35 @@ jobs:
 
       - name: Format check
         run: cargo fmt -- --check
+
+  publish:
+    needs: [python, rust]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Fetch tags
+      run: git fetch --prune --tags
+
+    - name: Install the latest version of rye
+      uses: eifinger/setup-rye@v4
+
+    - name: Build dist
+      run: |
+        rye build --verbose
+
+    - name: publish to pypi
+      run: |
+        rye publish --token ${{ secrets.PYPI_TOKEN }} --yes --verbose
+
+    - name: push tag
+      run: |
+        gh release create $(rye version)
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
