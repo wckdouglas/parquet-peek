@@ -70,6 +70,18 @@ mod tests {
     }
 
     #[test]
+    fn test_extract_bucket_no_blob() {
+        let (bucket, blob) = extract_bucket("gs://bucket").unwrap();
+        assert_eq!(bucket, "bucket");
+        assert_eq!(blob, "");
+    }
+
+    #[test]
+    fn test_collect_head_nonexistent_file() {
+        assert!(collect_head("/nonexistent/path.parquet", 5).is_err());
+    }
+
+    #[test]
     fn test_collect_head() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("test.parquet");

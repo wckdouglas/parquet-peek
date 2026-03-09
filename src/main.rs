@@ -4,7 +4,7 @@ use parquet_peek::collect_head;
 
 /// A tool to sneak peek parquet files
 #[derive(Parser)]
-#[command(about = "A tool to sneak peek parquet files")]
+#[command(about = "A tool to sneak peek parquet files", version)]
 struct Cli {
     /// Parquet file to peek
     #[arg(short = 'p', long)]
@@ -21,14 +21,14 @@ struct Cli {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let df = collect_head(&cli.parquet_fn, cli.lines_to_show)?;
 
-    // Configure polars display formatting
+    // Configure polars display formatting before reading data
+    // Safety: called in main before any threads are spawned
     std::env::set_var("POLARS_FMT_STR_LEN", cli.width.to_string());
-    std::env::set_var("POLARS_FMT_TABLE_CELL_LIST_LEN", cli.width.to_string());
     std::env::set_var("POLARS_TABLE_WIDTH", cli.width.to_string());
     std::env::set_var("POLARS_FMT_MAX_COLS", "-1");
 
+    let df = collect_head(&cli.parquet_fn, cli.lines_to_show)?;
     println!("{df}");
 
     Ok(())
