@@ -81,22 +81,71 @@ mod tests {
         assert!(collect_head("/nonexistent/path.parquet", 5).is_err());
     }
 
-    #[test]
-    fn test_collect_head() {
+    /// Helper to create a temp parquet file and return (tempdir, path_string).
+    /// Caller must hold the returned TempDir to keep the file alive.
+    fn create_test_parquet(n_rows: i32) -> (tempfile::TempDir, String) {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("test.parquet");
 
-        // Create a test parquet file
         let mut df = df!(
-            "col1" => (0i32..100).collect::<Vec<_>>(),
-            "col2" => (100i32..200).collect::<Vec<_>>()
+            "col1" => (0..n_rows).collect::<Vec<i32>>(),
+            "col2" => (100..(100 + n_rows)).collect::<Vec<i32>>()
         )
         .unwrap();
 
         let mut file = std::fs::File::create(&path).unwrap();
         ParquetWriter::new(&mut file).finish(&mut df).unwrap();
 
-        let result = collect_head(path.to_str().unwrap(), 5).unwrap();
+        let path_str = path.to_str().unwrap().to_string();
+        (dir, path_str)
+    }
+
+    #[test]
+    fn test_collect_head() {
+        let (_dir, path) = create_test_parquet(100);
+        let result = collect_head(&path, 5).unwrap();
         assert_eq!(result.height(), 5);
+    }
+
+    #[test]
+    fn test_collect_head_fewer_rows_than_limit() {
+        let (_dir, path) = create_test_parquet(3);
+        let result = collect_head(&path, 10).unwrap();
+        assert_eq!(result.height(), 3);
+    }
+
+    #[test]
+    fn test_collect_head_preserves_columns() {
+        let (_dir, path) = create_test_parquet(10);
+        let result = collect_head(&path, 5).unwrap();
+        assert_eq!(result.get_column_names(), &["col1", "col2"]);
+    }
+
+    #[test]
+    fn test_collect_head_returns_first_rows() {
+        let (_dir, path) = create_test_parquet(100);
+        let result = collect_head(&path, 3).unwrap();
+        let col1 = result.column("col1").unwrap();
+        let values: Vec<i32> = col1.i32().unwrap().into_no_null_iter().collect();
+        assert_eq!(values, vec![0, 1, 2]);
+    }
+
+    #[test]
+    fn test_extract_bucket_trailing_slash() {
+        let (bucket, blob) = extract_bucket("gs://bucket/").unwrap();
+        assert_eq!(bucket, "bucket");
+        assert_eq!(blob, "");
+    }
+
+    #[test]
+    fn test_extract_bucket_deeply_nested() {
+        let (bucket, blob) = extract_bucket("gs://b/a/b/c/d.parquet").unwrap();
+        assert_eq!(bucket, "b");
+        assert_eq!(blob, "a/b/c/d.parquet");
+    }
+
+    #[test]
+    fn test_extract_bucket_empty_string() {
+        assert!(extract_bucket("").is_err());
     }
 }
