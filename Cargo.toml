@@ -10,7 +10,7 @@ name = "parquet-peek"
 path = "src/main.rs"
 
 [features]
-default = []
+default = ["cloud"]
 cloud = ["dep:object_store", "dep:tokio", "polars/cloud", "polars/gcp", "polars/aws"]
 
 [dependencies]
