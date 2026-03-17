@@ -1,0 +1,24 @@
+[package]
+name = "parquet-peek"
+version = "0.1.0"
+edition = "2021"
+description = "just a simple way to check parquet file contents"
+authors = ["wckdouglas <douglas@vant.ai>"]
+
+[[bin]]
+name = "parquet-peek"
+path = "src/main.rs"
+
+[features]
+default = ["cloud"]
+cloud = ["dep:object_store", "dep:tokio", "polars/cloud", "polars/gcp", "polars/aws"]
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+polars = { version = "0.53", features = ["lazy", "parquet"] }
+anyhow = "1"
+object_store = { version = "0.11", features = ["gcp"], optional = true }
+tokio = { version = "1", features = ["rt-multi-thread"], optional = true }
+
+[dev-dependencies]
+tempfile = "3"

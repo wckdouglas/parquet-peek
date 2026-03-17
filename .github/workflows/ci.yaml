@@ -5,40 +5,71 @@ on:
     branches:
     - "**"
 
-
-# see:
-# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-concurrency-to-cancel-any-in-progress-job-or-run
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
+  python:
     runs-on: ubuntu-latest
     permissions:
-      contents: 'write'
+      contents: 'read'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install the latest version of rye
         uses: eifinger/setup-rye@v4
 
-      - name: test
+      - name: Test
         run: |
             rye sync
             rye test
 
+  rust:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Build
+        run: cargo build
+
+      - name: Build (cloud features)
+        run: cargo build --features cloud
+
+      - name: Test
+        run: cargo test
+
+      - name: Clippy
+        run: cargo clippy --all-features -- -D warnings
+
+      - name: Format check
+        run: cargo fmt -- --check
 
   publish:
-    needs: test
+    needs: [python, rust]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
